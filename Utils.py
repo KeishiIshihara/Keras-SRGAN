@@ -37,12 +37,14 @@ def hr_images(images):
     return images_hr
 
 # Takes list of images and provide LR images in form of numpy array
-def lr_images(images_real , downscale):
-
-    images = []
-    for img in  range(len(images_real)):
-        images.append(imresize(images_real[img], [images_real[img].shape[0]//downscale,images_real[img].shape[1]//downscale], interp='bicubic', mode=None))
-    images_lr = array(images)
+def lr_images(images_real , downscale=None):
+    if downscale is not None:
+        images = []
+        for img in  range(len(images_real)):
+            images.append(imresize(images_real[img], [images_real[img].shape[0]//downscale,images_real[img].shape[1]//downscale], interp='bicubic', mode=None))
+        images_lr = array(images)
+    else:
+        images_lr = array(images_real)
     return images_lr
 
 def normalize(input_data):
@@ -55,6 +57,9 @@ def denormalize(input_data):
 
 
 def load_path(path):
+    """
+    load path to data by searching recursively
+    """
     directories = []
     if os.path.isdir(path):
         directories.append(path)
@@ -128,8 +133,10 @@ def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio
     """load_training_data
 
     # Usage
-    load faces dataset:
-        $ load_training_data(directory='/path/to/dataset/faces', ext='.png', number_of_images=2688, train_test_ratio=0.8, downsample_factor=2 )
+    load face dataset:
+        x_train_lr, x_train_hr, x_test_lr, x_test_hr = load_training_data(directory='/path/to/dataset/faces', ext='.png',
+                                                                          number_of_images=2688, train_test_ratio=0.8,
+                                                                          downsample_factor=4)
     """
 
     number_of_train_images = int(number_of_images * train_test_ratio)
@@ -144,37 +151,41 @@ def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio
         raise ValueError('input data path not found.')
 
 
-    files = load_data_from_dirs(load_path(directory), ext)
+    files_hr = load_data_from_dirs(load_path(ground_truth_dir), ext)
+    files_lr = load_data_from_dirs(load_path(input_data_dir), ext)
 
-    if len(files) < number_of_images:
+    if (len(files_hr) or len(files_lr)) < number_of_images:
         print("Number of image files are less then you specified")
-        print("Please reduce number of images to %d" % len(files))
+        print("Please reduce number of images to %d or %d" % len(files_hr), len(files_lr))
         sys.exit()
 
-    test_array = array(files)
-    if len(test_array.shape) < 3:
-        print("Images are of not same shape")
-        print("Please provide same shape images")
-        sys.exit()
+    # test_array = array(files)
+    # if len(test_array.shape) < 3:
+    #     print("Images are of not same shape")
+    #     print("Please provide same shape images")
+    #     sys.exit()
 
     # train test split
-    x_train = files[:number_of_train_images]
-    x_test = files[number_of_train_images:number_of_images]
+    x_train_hr = files_hr[:number_of_train_images]
+    x_train_lr = files_lr[:number_of_train_images]
+    x_test_hr = files_hr[number_of_train_images:number_of_images]
+    x_test_lr = files_lr[number_of_train_images:number_of_images]
 
     # high resolution dataset
-    x_train_hr = hr_images(x_train) # returns ndarray type object
+    x_train_hr = hr_images(x_train_hr) # returns ndarray type object
     x_train_hr = normalize(x_train_hr) # [-1, 1]
 
     # low resolution dataset
-    x_train_lr = lr_images(x_train, 4) # returns downsampled images by given factor
+    # x_train_lr = lr_images(x_train, 4) # returns downsampled images by given factor
+    x_train_lr = lr_images(x_train_lr)
     x_train_lr = normalize(x_train_lr)
 
     # high resolution dataset
-    x_test_hr = hr_images(x_test)
+    x_test_hr = hr_images(x_test_hr)
     x_test_hr = normalize(x_test_hr)
 
     # low resolution dataset
-    x_test_lr = lr_images(x_test, 4)
+    x_test_lr = lr_images(x_test_lr)
     x_test_lr = normalize(x_test_lr)
 
     return x_train_lr, x_train_hr, x_test_lr, x_test_hr
