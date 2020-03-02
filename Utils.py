@@ -1,4 +1,4 @@
-!/usr/bin/env python
+#!/usr/bin/env python
 #title           :Utils.py
 #description     :Have helper functions to process images and plot images
 #author          :Deepak Birla
@@ -83,6 +83,7 @@ def load_data(directory, ext):
     files = load_data_from_dirs(load_path(directory), ext)
     return files
 
+"""
 def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio = 0.8):
 
     number_of_train_images = int(number_of_images * train_test_ratio)
@@ -100,18 +101,79 @@ def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio
         print("Please provide same shape images")
         sys.exit()
 
+    # train test split
     x_train = files[:number_of_train_images]
     x_test = files[number_of_train_images:number_of_images]
 
-    x_train_hr = hr_images(x_train)
-    x_train_hr = normalize(x_train_hr)
+    # high resolution dataset
+    x_train_hr = hr_images(x_train) # returns ndarray type object
+    x_train_hr = normalize(x_train_hr) # [-1, 1]
 
-    x_train_lr = lr_images(x_train, 4)
+    # low resolution dataset
+    x_train_lr = lr_images(x_train, 4) # returns downsampled images by given factor
     x_train_lr = normalize(x_train_lr)
 
+    # high resolution dataset
     x_test_hr = hr_images(x_test)
     x_test_hr = normalize(x_test_hr)
 
+    # low resolution dataset
+    x_test_lr = lr_images(x_test, 4)
+    x_test_lr = normalize(x_test_lr)
+
+    return x_train_lr, x_train_hr, x_test_lr, x_test_hr
+"""
+
+def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio = 0.8, downsample_factor=2):
+    """load_training_data
+
+    # Usage
+    load faces dataset:
+        $ load_training_data(directory='/path/to/dataset/faces', ext='.png', number_of_images=2688, train_test_ratio=0.8, downsample_factor=2 )
+    """
+
+    number_of_train_images = int(number_of_images * train_test_ratio)
+
+    ground_truth_dir = os.path.join(directory, 'gt')
+    input_data_dir = os.path.join(directory, 'low_resolution', str(downsample_factor))
+
+    if not os.path.exists(ground_truth_dir):
+        raise ValueError('ground truth data path not found.')
+
+    if not os.path.exists(input_data_dir):
+        raise ValueError('input data path not found.')
+
+
+    files = load_data_from_dirs(load_path(directory), ext)
+
+    if len(files) < number_of_images:
+        print("Number of image files are less then you specified")
+        print("Please reduce number of images to %d" % len(files))
+        sys.exit()
+
+    test_array = array(files)
+    if len(test_array.shape) < 3:
+        print("Images are of not same shape")
+        print("Please provide same shape images")
+        sys.exit()
+
+    # train test split
+    x_train = files[:number_of_train_images]
+    x_test = files[number_of_train_images:number_of_images]
+
+    # high resolution dataset
+    x_train_hr = hr_images(x_train) # returns ndarray type object
+    x_train_hr = normalize(x_train_hr) # [-1, 1]
+
+    # low resolution dataset
+    x_train_lr = lr_images(x_train, 4) # returns downsampled images by given factor
+    x_train_lr = normalize(x_train_lr)
+
+    # high resolution dataset
+    x_test_hr = hr_images(x_test)
+    x_test_hr = normalize(x_test_hr)
+
+    # low resolution dataset
     x_test_lr = lr_images(x_test, 4)
     x_test_lr = normalize(x_test_lr)
 
