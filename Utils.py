@@ -159,11 +159,6 @@ def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio
         print("Please reduce number of images to %d or %d" % len(files_hr), len(files_lr))
         sys.exit()
 
-    # test_array = array(files)
-    # if len(test_array.shape) < 3:
-    #     print("Images are of not same shape")
-    #     print("Please provide same shape images")
-    #     sys.exit()
 
     # train test split
     x_train_hr = files_hr[:number_of_train_images]
