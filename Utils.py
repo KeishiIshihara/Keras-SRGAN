@@ -37,11 +37,11 @@ def hr_images(images):
     return images_hr
 
 # Takes list of images and provide LR images in form of numpy array
-def lr_images(images_real , downscale=None):
+def lr_images(images_real , downscale=None, interp='bicubic'):
     if downscale is not None:
         images = []
         for img in  range(len(images_real)):
-            images.append(imresize(images_real[img], [images_real[img].shape[0]//downscale,images_real[img].shape[1]//downscale], interp='bicubic', mode=None))
+            images.append(imresize(images_real[img], [images_real[img].shape[0]//downscale,images_real[img].shape[1]//downscale], interp=interp, mode=None))
         images_lr = array(images)
     else:
         images_lr = array(images_real)
@@ -88,23 +88,57 @@ def load_data(directory, ext):
     files = load_data_from_dirs(load_path(directory), ext)
     return files
 
-"""
-def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio = 0.8):
+
+def load_training_data(directory, ddomain='faces', number_of_images = 1000, train_test_ratio = 0.8, downscale_factor=4, interp='bicubic'):
+    """load_training_data
+    This will use only ground truth data and input data will be created by applying downsampling with given factor
+
+    # Usage
+    load face dataset:
+        x_train_lr, x_train_hr, x_test_lr, x_test_hr = load_training_data(
+                directory='/path/to/dataset/', ddomain='faces',
+                number_of_images=2688, train_test_ratio=0.8,
+                downsample_factor=4
+        )
+    """
+
 
     number_of_train_images = int(number_of_images * train_test_ratio)
 
-    files = load_data_from_dirs(load_path(directory), ext)
+
+    if not os.path.exists(directory):
+        raise ValueError('directory path not found.')
+
+    if ddomain == 'faces':
+        print('[INFO] now loading face images..')
+        ground_truth_dir = os.path.join(directory, 'faces/gt')
+        files = load_data_from_dirs(load_path(ground_truth_dir), '.png')
+    elif ddomain == 'landscapes':
+        print('[INFO] now loading landscape images..')
+        ground_truth_dir = os.path.join(directory, 'landscapes/gt')
+        files = load_data_from_dirs(load_path(ground_truth_dir), '.jpg')
+    else: # ddomain == 'both':
+        print('Not yet available.')
+        sys.exit()
+
+        ground_truth_dir = os.path.join(directory, 'faces/gt')
+        files_faces = load_data_from_dirs(load_path(ground_truth_dir), '.png')
+
+        ground_truth_dir = os.path.join(directory, 'landscapes/gt')
+        files_landscapes = load_data_from_dirs(load_path(ground_truth_dir), '.png')
+
+        files = files_faces + files_landscapes
 
     if len(files) < number_of_images:
         print("Number of image files are less then you specified")
         print("Please reduce number of images to %d" % len(files))
         sys.exit()
 
-    test_array = array(files)
-    if len(test_array.shape) < 3:
-        print("Images are of not same shape")
-        print("Please provide same shape images")
-        sys.exit()
+    # test_array = array(files)
+    # if len(test_array.shape) < 3:
+    #     print("Images are of not same shape")
+    #     print("Please provide same shape images")
+    #     sys.exit()
 
     # train test split
     x_train = files[:number_of_train_images]
@@ -115,7 +149,7 @@ def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio
     x_train_hr = normalize(x_train_hr) # [-1, 1]
 
     # low resolution dataset
-    x_train_lr = lr_images(x_train, 4) # returns downsampled images by given factor
+    x_train_lr = lr_images(x_train, downscale=downscale_factor, interp=interp) # returns downsampled images by given factor
     x_train_lr = normalize(x_train_lr)
 
     # high resolution dataset
@@ -123,14 +157,14 @@ def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio
     x_test_hr = normalize(x_test_hr)
 
     # low resolution dataset
-    x_test_lr = lr_images(x_test, 4)
+    x_test_lr = lr_images(x_test, downscale=downscale_factor, interp=interp)
     x_test_lr = normalize(x_test_lr)
 
     return x_train_lr, x_train_hr, x_test_lr, x_test_hr
-"""
 
-def load_training_data(directory, ext, number_of_images = 1000, train_test_ratio = 0.8, downsample_factor=2):
-    """load_training_data
+
+def load_mishima_data(directory, ext, number_of_images = 1000, train_test_ratio = 0.8, downsample_factor=2):
+    """load_mishima_data
 
     # Usage
     load face dataset:
