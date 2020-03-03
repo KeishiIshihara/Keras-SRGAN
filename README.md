@@ -1,3 +1,16 @@
+# Keras-SRGAN @ Joensuu_3 team
+
+Keras-SRGAN repository of Joensuu_3 team.
+
+## Installation
+```bash
+# Isntall Python-3.6.7
+$ pyenv install 3.6.7
+# Then get libraries
+$ pip install -r python-3.6.7.txt
+```
+
+---
 # Keras-SRGAN
 Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network implemented in Keras
 
