@@ -1,6 +1,10 @@
 # Keras-SRGAN @ Joensuu_3 team
 
-Keras-SRGAN repository of Joensuu_3 team.
+Keras-SRGAN repository of Joensuu_3 team.  
+(Beta ver: data generator will be implemented soon.)  
+
+
+Let's give it a try from here!
 
 ## Installation
 ```bash
@@ -10,7 +14,34 @@ $ pyenv install 3.6.7
 $ pip install -r python-3.6.7.txt
 ```
 
+## Prerequisits
+Make sure that you have following folders:
+- dataset
+- output directory: generated images will be stored
+- model directory: checkpoint file(.hdf5) will be stored
+
+These directories can be separated from local repository of this poroject.
+
+## Usage
+You can train using very small dataset quantity at this moment.
+```bash
+# Run below command to train model. Set parameters accordingly.
+$ python train.py -d 'downsample' -do 'faces' --input_dir='./input' --output_dir='./output' --model_save_dir='./model' -b 128 -e 100 -n 2688 -r 0.8 -f 4
+
+# If you do not want to use or have gpu, then run:
+$ CUDA_VISIBLE_DEVICES= python train.py -d 'downsample' -do 'faces' --input_dir='./input' --output_dir='./output' --model_save_dir='./model' -b 128 -e 100 -n 2688 -r 0.8 -f 4
+
+# (keishish version)
+$ CUDA_VISIBLE_DEVICES= python train.py -d 'downsample' -do 'faces' -b 16 -e 10 -n 100 -r 0.8 -f 4
+
+```
+
+## Test
+comming soon..
+
+
 ---
+(original readme)
 # Keras-SRGAN
 Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network implemented in Keras
 
