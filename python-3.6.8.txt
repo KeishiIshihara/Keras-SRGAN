@@ -1,13 +1,10 @@
 absl-py==0.8.0
 actionlib==1.12.0
-# angles==1.9.11
 astor==0.8.0
 backcall==0.1.0
 bondpy==1.8.3
 cachetools==4.0.0
-# camera-calibration==1.13.0
 camera-calibration-parsers==1.11.13
-# catkin==0.7.19
 certifi==2019.11.28
 chardet==3.0.4
 gnureadline==8.0.0
