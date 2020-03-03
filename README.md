@@ -8,9 +8,10 @@ Let's give it a try from here!
 
 ## Installation
 ```bash
-# Isntall Python-3.6.7
+# Isntall Python 3.6.7 is recommended (officially 3.5.3 was used)
 $ pyenv install 3.6.7
-# Then get libraries
+
+# Then, get libraries, you might want to install some as necessary
 $ pip install -r python-3.6.7.txt
 ```
 
