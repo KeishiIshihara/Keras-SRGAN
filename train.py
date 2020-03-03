@@ -17,9 +17,14 @@ import numpy as np
 import os, sys
 import argparse
 
+import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config = tf.compat.v1.ConfigProto(gpu_options=tf.compat.v1.GPUOptions(visible_device_list='0', allow_growth=True))
+set_session(tf.Session(config=config))
+
 np.random.seed(10)
 # Better to use downscale factor as 4
-downscale_factor = 4
+# downscale_factor = 4
 # Remember to change image shape if you are having different size of images
 # image_shape = (384,384,3)
 image_shape = (256,256,3)
@@ -39,9 +44,12 @@ def get_gan_network(discriminator, shape, generator, optimizer, vgg_loss):
 
 # default values for all parameters are given, if want defferent values you can give via commandline
 # for more info use $python train.py -h
-def train(epochs, batch_size, input_dir, output_dir, model_save_dir, number_of_images, train_test_ratio):
+def train(epochs, batch_size, input_dir, output_dir, model_save_dir, number_of_images, train_test_ratio, ddomain, downscale_factor):
+    """
+    ddomain is suppoused to be 'faces', 'landscapes', or 'both'
+    """
 
-    x_train_lr, x_train_hr, x_test_lr, x_test_hr = Utils.load_training_data(input_dir, '.jpg', number_of_images, train_test_ratio)
+    x_train_lr, x_train_hr, x_test_lr, x_test_hr = Utils.load_training_data(input_dir, ddomain, number_of_images, train_test_ratio)
     loss = VGG_LOSS(image_shape)
 
     batch_count = int(x_train_hr.shape[0] / batch_size)
@@ -97,33 +105,64 @@ def train(epochs, batch_size, input_dir, output_dir, model_save_dir, number_of_i
 
         print("discriminator_loss : %f" % discriminator_loss)
         print("gan_loss :", gan_loss)
-        gan_loss = str(gan_loss)
+        # gan_loss = str(gan_loss)
 
         loss_file = open(os.path.join(model_save_dir, 'losses.txt') , 'a')
-        loss_file.write('epoch%d : gan_loss = %s ; discriminator_loss = %f\n' %(e, gan_loss, discriminator_loss) )
+        loss_file.write('epoch%d : gan_loss = %s ; discriminator_loss = %f\n' %(e, str(gan_loss), discriminator_loss) )
         loss_file.close()
 
         if e == 1 or e % 5 == 0:
             Utils.plot_generated_images(output_dir, e, generator, x_test_hr, x_test_lr)
         if e % 100 == 0:
-            generator.save(model_save_dir + 'gen_model%d.h5' % e)
-            discriminator.save(model_save_dir + 'dis_model%d.h5' % e)
-        if gan_loss < gan_loss_best:
-            gan_loss_best = gan_loss
-            generator.save(os.path.join(model_save_dir, 'gen_model{}_by_loss_monitor.h5'.format(e)))
+            generator.save(os.path.join(model_save_dir, 'gen_model{}.h5'.format(e)))
+            discriminator.save(os.path.join(model_save_dir, 'dis_model{}.h5'.format(e)))
+        # if gan_loss < gan_loss_best:
+        #     gan_loss_best = gan_loss
+        #     generator.save(os.path.join(model_save_dir, 'gen_model{}_by_loss_monitor.h5'.format(e)))
         if discriminator_loss < discriminator_loss_best:
             discriminator_loss_best = discriminator_loss
-            discriminator.save((model_save_dir, 'dis_model{}_by_loss_monitor.h5'.format(e)))
+            discriminator.save(os.path.join(model_save_dir, 'dis_model{}_by_loss_monitor.h5'.format(e)))
+
+
 
 
 if __name__== "__main__":
+    """ train.py
+
+    # Usage
+
+    Run below command to train model. Set parameters accordingly.
+    ```terminal
+    $ python train.py -d downsample -do faces --input_dir='./input' --output_dir='./output' --model_save_dir='./model' -b 128 -e 100 -n 2688 -r 0.8 -f 4
+    ```
+
+    If you do not want to use or have gpu, then run:
+    ```terminal
+    $ CUDA_VISIBLE_DEVICES= python train.py -d downsample -do faces --input_dir='./input' --output_dir='./output' --model_save_dir='./model' -b 128 -e 100 -n 2688 -r 0.8 -f 4
+    ```
+
+    (keishish version)
+    ```terminal-in-keishish
+    $ CUDA_VISIBLE_DEVICES= python train.py -d downsample -do faces -b 128 -e 100 -n 2688 -r 0.8 -f 4
+    ```
+
+    """
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--data-downsample', action='store', dest='data_downsample',
+                    default='downsample',
+                    # default='use_mishima_data',
+                    help='')
+
+    parser.add_argument('-do', '--data-domain', action='store', dest='data_domain',
+                    default='faces',
+                    # default='landscapes',
+                    # default='both',
+                    help='')
 
     parser.add_argument('-i', '--input_dir', action='store', dest='input_dir',
-                    # default='./data/' ,
-                    default='/media/ssd1/srgan_dataset/images/faces',
-                    # default='/media/ssd1/srgan_dataset/images/landscapes',
+                    # default='/media/ssd1/srgan_dataset/images/',
+                    default='/media/ssd1/srgan_dataset/image_test/',
                     help='Path for input images')
 
     parser.add_argument('-o', '--output_dir', action='store', dest='output_dir',
@@ -153,6 +192,21 @@ if __name__== "__main__":
 
     values = parser.parse_args()
 
-    train(values.epochs, values.batch_size, values.input_dir, values.output_dir, values.model_save_dir, values.number_of_images, values.train_test_ratio)
+
+    # check arguments
+    if values.data_domain not in {'faces', 'landscapes', 'both'}:
+        raise ValueError('data domain is not set collectly.')
+
+    if values.data_downsample not in {'downsample', 'use_mishima_data'}:
+        raise ValueError('input-data should be either donwsample or use_mishima_data.')
+
+    # check params
+
+    # train
+    if values.data_downsample == 'downsample':
+        train(values.epochs, values.batch_size, values.input_dir, values.output_dir, values.model_save_dir, values.number_of_images, values.train_test_ratio, values.data_domain, values.downscale_factor)
+    elif values.data_downsample == 'use_mishima_data':
+        pass
+        # train_using_mishima_data(values.epochs, values.batch_size, values.input_dir, values.output_dir, values.model_save_dir, values.number_of_images, values.train_test_ratio, values.data_domain, values.downscale_factor)
 
 
