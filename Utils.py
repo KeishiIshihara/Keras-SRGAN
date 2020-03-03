@@ -279,7 +279,7 @@ def plot_generated_images(output_dir, epoch, generator, x_test_hr, x_test_lr , d
     plt.axis('off')
 
     plt.tight_layout()
-    plt.savefig(output_dir + 'generated_image_%d.png' % epoch)
+    plt.savefig(os.path.join(output_dir, 'generated_image_{}.png'.format(epoch)))
 
     #plt.show()
 
@@ -311,7 +311,7 @@ def plot_test_generated_images_for_model(output_dir, generator, x_test_hr, x_tes
         plt.axis('off')
 
         plt.tight_layout()
-        plt.savefig(output_dir + 'test_generated_image_%d.png' % index)
+        plt.savefig(os.path.join(output_dir, 'test_generated_image_{}.png'.format(index)))
 
         #plt.show()
 
@@ -331,7 +331,7 @@ def plot_test_generated_images(output_dir, generator, x_test_lr, figsize=(5, 5))
         plt.axis('off')
 
         plt.tight_layout()
-        plt.savefig(output_dir + 'high_res_result_image_%d.png' % index)
+        plt.savefig(os.path.join(output_dir, 'high_res_result_image_{}.png'.format(index)))
 
         #plt.show()
 
