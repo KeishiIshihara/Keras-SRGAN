@@ -6,6 +6,15 @@
 #usage           :python train.py --options
 #python_version  :3.5.4
 
+# do not display warnings and deprecated messages
+import warnings
+warnings.filterwarnings('ignore')
+from tensorflow.python.util import deprecation_wrapper
+deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+from tensorflow.python.util import deprecation
+deprecation._PRINT_DEPRECATION_WARNINGS = False
+
+
 from Network import Generator, Discriminator
 import Utils_model, Utils
 from Utils_model import VGG_LOSS
@@ -118,11 +127,12 @@ def train(epochs, batch_size, input_dir, output_dir, model_save_dir, number_of_i
             discriminator.save(os.path.join(model_save_dir, 'dis_model{}.h5'.format(e)))
         # if gan_loss < gan_loss_best:
         #     gan_loss_best = gan_loss
-        #     generator.save(os.path.join(model_save_dir, 'gen_model{}_by_loss_monitor.h5'.format(e)))
+        #     discriminator.save(os.path.join(model_save_dir, 'dis_model{}_by_monitoring_gen_loss.h5'.format(e)))
+        #     generator.save(os.path.join(model_save_dir, 'gen_model{}_by_monitoring_gen_loss.h5'.format(e)))
         if discriminator_loss < discriminator_loss_best:
             discriminator_loss_best = discriminator_loss
-            discriminator.save(os.path.join(model_save_dir, 'dis_model{}_by_loss_monitor.h5'.format(e)))
-
+            discriminator.save(os.path.join(model_save_dir, 'dis_model{}_by_monitoring_dis_loss.h5'.format(e)))
+            generator.save(os.path.join(model_save_dir, 'gen_model{}_by_monitoring_dis_loss.h5'.format(e)))
 
 
 
