@@ -156,14 +156,15 @@ def train_on_generator(params):
     # get params
     epochs = params['epochs']
     batch_size = params['batch_size']
-    input_dir = params['input_dir']
     output_dir = params['output_dir']
     model_save_dir = params['model_save_dir']
     downscale_factor = params['downscale_factor']
     interp = params['interpolation']
 
+    input_dir = Utils.load_dir(params)
+
     # load datasets
-    datagen = image.ImageDataGenerator(validation_split = 1. - params['train_test_ratio'])
+    datagen = image.ImageDataGenerator(validation_split = 1. - params['train_test_ratio'], rescale=1.)
 
     train_generator = datagen.flow_from_directory(
             input_dir,
@@ -213,8 +214,12 @@ def train_on_generator(params):
             # --- step 1: Discriminator
             # get batch data
             rand_num = np.random.randint(len(train_generator))
-            image_batch_hr, _ = train_generator[rand_num]
-            image_batch_lr = Utils.normalized_lr_images(image_batch_hr, downscale_factor, interp)
+            image_batch = train_generator[rand_num]
+            batch_size = image_batch.shape[0]
+            # Utils.plot_images(output_dir,image_batch) # take a look
+
+            image_batch_hr = Utils.normalize(image_batch)
+            image_batch_lr = Utils.normalized_lr_images(image_batch, downscale_factor, interp)
             generated_images_sr = generator.predict(image_batch_lr) # get generator prediction
 
             # make label data
@@ -231,8 +236,10 @@ def train_on_generator(params):
             # --- step 2: GAN (Generator)
             # get batch data
             rand_num = np.random.randint(len(train_generator))
-            image_batch_hr, _ = train_generator[rand_num]
-            image_batch_lr = Utils.normalized_lr_images(image_batch_hr, downscale_factor, interp)
+            image_batch = train_generator[rand_num]
+            batch_size = image_batch.shape[0]
+            image_batch_hr = Utils.normalize(image_batch)
+            image_batch_lr = Utils.normalized_lr_images(image_batch, downscale_factor, interp)
 
             # make label data
             gan_Y = np.ones(batch_size) - np.random.random_sample(batch_size)*0.2 # biased noise for y
@@ -285,7 +292,7 @@ if __name__== "__main__":
 
     (keishish version)
     ```terminal-in-keishish
-    $ CUDA_VISIBLE_DEVICES= python train.py -d downsample -do faces -b 128 -e 100 -n 2688 -r 0.8 -f 4
+    $ CUDA_VISIBLE_DEVICES= python train.py -d downsample -do faces -b 4 -e 50 -n 2688 -r 0.8 -f 4
     ```
 
     """
@@ -302,8 +309,10 @@ if __name__== "__main__":
                     help='Which data domain to use.')
 
     parser.add_argument('-i', '--input_dir', action='store', dest='input_dir',
+                    default='/media/ssd1/srgan_dataset/images_only_original/',
                     # default='/media/ssd1/srgan_dataset/images/',
-                    default='/media/ssd1/srgan_dataset/image_test/',
+                    # default='/media/ssd1/srgan_dataset/image_test/',
+                    # default='/media/ssd1/srgan_dataset/image_test_2/',
                     help='Path for input images')
 
     parser.add_argument('-o', '--output_dir', action='store', dest='output_dir',
