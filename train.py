@@ -163,9 +163,8 @@ def train_on_generator(params):
     interp = params['interpolation']
 
     # load datasets
-    # x_train_lr, x_train_hr, x_test_lr, x_test_hr = Utils.load_training_data(params['input_dir'], params['data_domain'], params['number_of_images'], params['train_test_ratio'] )
-
     datagen = image.ImageDataGenerator(validation_split = 1. - params['train_test_ratio'])
+
     train_generator = datagen.flow_from_directory(
             input_dir,
             target_size=(image_shape[0], image_shape[1]),
@@ -184,9 +183,9 @@ def train_on_generator(params):
             subset = "validation"
         )
 
-    loss = VGG_LOSS(image_shape)
 
-    train_generator
+    # loss function
+    loss = VGG_LOSS(image_shape)
 
     # batch_count = int(x_train_hr.shape[0] / batch_size)
     batch_count = len(train_generator)
@@ -213,7 +212,8 @@ def train_on_generator(params):
 
             # --- step 1: Discriminator
             # get batch data
-            image_batch_hr = train_generator[rand_num]
+            rand_num = np.random.randint(len(train_generator))
+            image_batch_hr, _ = train_generator[rand_num]
             image_batch_lr = Utils.normalized_lr_images(image_batch_hr, downscale_factor, interp)
             generated_images_sr = generator.predict(image_batch_lr) # get generator prediction
 
@@ -231,7 +231,7 @@ def train_on_generator(params):
             # --- step 2: GAN (Generator)
             # get batch data
             rand_num = np.random.randint(len(train_generator))
-            image_batch_hr = train_generator[rand_num]
+            image_batch_hr, _ = train_generator[rand_num]
             image_batch_lr = Utils.normalized_lr_images(image_batch_hr, downscale_factor, interp)
 
             # make label data
@@ -252,7 +252,7 @@ def train_on_generator(params):
 
         if e == 1 or e % 5 == 0:
             # Utils.plot_generated_images(output_dir, e, generator, x_test_hr, x_test_lr)
-            Utils.plot_generated_images_on_batch(output_dir, e, generator, val_generator)
+            Utils.plot_generated_images_on_batch(output_dir, e, generator, val_generator, downscale_factor, interp)
         if e % 100 == 0:
             generator.save(os.path.join(model_save_dir, 'gen_model{}.h5'.format(e)))
             discriminator.save(os.path.join(model_save_dir, 'dis_model{}.h5'.format(e)))

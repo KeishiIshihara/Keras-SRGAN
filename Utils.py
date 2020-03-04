@@ -295,7 +295,7 @@ def plot_generated_images_on_batch(output_dir, epoch, generator, data_gen , down
 
     len(data_gen)
     value = randint(len(data_gen))
-    x_test_hr = data_gen[value]
+    x_test_hr, _ = data_gen[value]
 
     value = randint(len(x_test_hr))
 
