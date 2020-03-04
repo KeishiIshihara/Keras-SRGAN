@@ -95,6 +95,17 @@ def load_data(directory, ext):
     return files
 
 
+def load_dir(params):
+    if params['data_domain'] == 'faces':
+        data_path = os.path.join(params['input_dir'], 'faces')
+    elif params['data_domain'] == 'landscapes':
+        data_path = os.path.join(params['input_dir'], 'landscapes')
+    else:
+        data_path = params['input_dir']
+
+    return data_path
+
+
 def load_training_data(directory, ddomain='faces', number_of_images = 1000, train_test_ratio = 0.8, downscale_factor=4, interp='bicubic'):
     """load_training_data
     This will use only ground truth data and input data will be created by applying downsampling with given factor
@@ -295,12 +306,12 @@ def plot_generated_images_on_batch(output_dir, epoch, generator, data_gen , down
 
     len(data_gen)
     value = randint(len(data_gen))
-    x_test_hr, _ = data_gen[value]
+    x_test = data_gen[value]
 
-    value = randint(len(x_test_hr))
+    value = randint(len(x_test))
 
-    image_batch_hr = x_test_hr
-    image_batch_lr = normalized_lr_images(x_test_hr, downsample_factor, interp)
+    image_batch_hr = x_test.astype(np.uint8)
+    image_batch_lr = normalized_lr_images(x_test, downsample_factor, interp)
 
     gen_img = generator.predict(image_batch_lr)
     generated_image = denormalize(gen_img)
@@ -377,6 +388,27 @@ def plot_test_generated_images(output_dir, generator, x_test_lr, figsize=(5, 5))
         plt.savefig(os.path.join(output_dir, 'high_res_result_image_{}.png'.format(index)))
 
         #plt.show()
+
+
+# Takes LR images and save respective HR images
+def plot_images(output_dir, images, figsize=(5, 5)):
+
+    examples = images.shape[0]
+    images = images.astype(np.uint8)
+
+    plt.figure(figsize=(5*examples, 5))
+
+    for index in range(examples):
+
+        plt.subplot(1, examples, index+1)
+        plt.imshow(images[index], interpolation='nearest')
+        plt.axis('off')
+
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'image.png'))
+
+    #plt.show()
 
 
 
