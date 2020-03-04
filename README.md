@@ -29,7 +29,7 @@ You can train using very small dataset quantity at this moment.
 # Run below command to train model. Set parameters accordingly.
 $ python train.py -d 'downsample' -do 'faces' --input_dir='./input' --output_dir='./output' --model_save_dir='./model' -b 128 -e 100 -n 2688 -r 0.8 -f 4
 
-# If you do not want to use or have gpu, then run:
+# If you do not want to use or have gpu, then run: ### NOT AVAILABLE ###
 $ CUDA_VISIBLE_DEVICES= python train.py -d 'downsample' -do 'faces' --input_dir='./input' --output_dir='./output' --model_save_dir='./model' -b 128 -e 100 -n 2688 -r 0.8 -f 4
 
 # (keishish version)
