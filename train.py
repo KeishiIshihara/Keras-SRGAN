@@ -10,6 +10,7 @@
 # do not display warnings and deprecated messages
 import warnings
 warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore')
 from tensorflow.python.util import deprecation_wrapper
 deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
 from tensorflow.python.util import deprecation
@@ -68,6 +69,7 @@ def train(params):
     output_dir = params['output_dir']
     model_save_dir = params['model_save_dir']
     downscale_factor = params['downscale_factor']
+
 
     # load datasets
     x_train_lr, x_train_hr, x_test_lr, x_test_hr = Utils.load_training_data(params['input_dir'], params['data_domain'], params['number_of_images'], params['train_test_ratio'] )
@@ -156,33 +158,40 @@ def train_on_generator(params):
     # get params
     epochs = params['epochs']
     batch_size = params['batch_size']
-    output_dir = params['output_dir']
-    model_save_dir = params['model_save_dir']
     downscale_factor = params['downscale_factor']
     interp = params['interpolation']
 
-    input_dir = Utils.load_dir(params)
+    # load data dir
+    input_train_dir, input_test_dir, monitor_dir = Utils.load_dir(params)
+    # model dir
+    model_save_dir = os.path.join(params['model_save_dir'], params['data_domain'])
+    os.makedirs(model_save_dir, exist_ok=True)
+    # fig output dir
+    output_dir = os.path.join(params['output_dir'], params['data_domain'])
+    os.makedirs(output_dir, exist_ok=True)
+
+    monitoring_images = Utils.load_data_from_dirs(monitor_dir, None)
+    monitoring_images = np.array(monitoring_images)
+    print('[INFO] monitoring images {} found.'.format(monitoring_images.shape[0]))
 
     # load datasets
-    datagen = image.ImageDataGenerator(validation_split = 1. - params['train_test_ratio'], rescale=1.)
+    datagen = image.ImageDataGenerator(rescale=1.)
 
     train_generator = datagen.flow_from_directory(
-            input_dir,
+            input_train_dir,
             target_size=(image_shape[0], image_shape[1]),
             batch_size=batch_size,
             class_mode=None,
             shuffle=True,
-            subset = "training"
         )
 
-    val_generator = datagen.flow_from_directory(
-            input_dir,
-            target_size=(image_shape[0], image_shape[1]),
-            batch_size=batch_size,
-            class_mode=None,
-            shuffle=True,
-            subset = "validation"
-        )
+    # val_generator = datagen.flow_from_directory(
+    #         input_test_dir,
+    #         target_size=(image_shape[0], image_shape[1]),
+    #         batch_size=batch_size,
+    #         class_mode=None,
+    #         shuffle=True,
+    #     )
 
 
     # loss function
@@ -251,26 +260,25 @@ def train_on_generator(params):
 
         print("discriminator_loss : %f" % discriminator_loss)
         print("gan_loss :", gan_loss)
-        # gan_loss = str(gan_loss)
 
         loss_file = open(os.path.join(model_save_dir, 'losses.txt') , 'a')
         loss_file.write('epoch%d : gan_loss = %s ; discriminator_loss = %f\n' %(e, str(gan_loss), discriminator_loss) )
         loss_file.close()
 
         if e == 1 or e % 5 == 0:
-            # Utils.plot_generated_images(output_dir, e, generator, x_test_hr, x_test_lr)
-            Utils.plot_generated_images_on_batch(output_dir, e, generator, val_generator, downscale_factor, interp)
-        if e % 100 == 0:
-            generator.save(os.path.join(model_save_dir, 'gen_model{}.h5'.format(e)))
-            discriminator.save(os.path.join(model_save_dir, 'dis_model{}.h5'.format(e)))
-        # if gan_loss < gan_loss_best:
-        #     gan_loss_best = gan_loss
-        #     discriminator.save(os.path.join(model_save_dir, 'dis_model{}_by_monitoring_gen_loss.h5'.format(e)))
-        #     generator.save(os.path.join(model_save_dir, 'gen_model{}_by_monitoring_gen_loss.h5'.format(e)))
+            # from validation generator
+            # Utils.plot_generated_images_on_batch(output_dir, e, generator, val_generator, downscale_factor, interp)
+            # fixed monitoring images
+            # monitoring_images = Utils.load_data(monitor_dir, None)
+            Utils.plot_generated_images_for_monitoring(output_dir, e, generator, monitoring_images, downscale_factor, interp)
+
+        if e % 5 == 0:
+            generator.save(os.path.join(model_save_dir, '{}_gen_model{}.h5'.format(params['data_domain'], e)))
+            discriminator.save(os.path.join(model_save_dir, '{}_dis_model{}.h5'.format(params['data_domain'], e)))
         if discriminator_loss < discriminator_loss_best:
             discriminator_loss_best = discriminator_loss
-            discriminator.save(os.path.join(model_save_dir, 'dis_model{}_by_monitoring_dis_loss.h5'.format(e)))
-            generator.save(os.path.join(model_save_dir, 'gen_model{}_by_monitoring_dis_loss.h5'.format(e)))
+            discriminator.save(os.path.join(model_save_dir, '{}_dis_model{}_by_monitoring_dis_loss.h5'.format(params['data_domain'], e)))
+            generator.save(os.path.join(model_save_dir, '{}_gen_model{}_by_monitoring_dis_loss.h5'.format(params['data_domain'], e)))
 
 
 
@@ -309,10 +317,8 @@ if __name__== "__main__":
                     help='Which data domain to use.')
 
     parser.add_argument('-i', '--input_dir', action='store', dest='input_dir',
-                    default='/media/ssd1/srgan_dataset/images_only_original/',
-                    # default='/media/ssd1/srgan_dataset/images/',
-                    # default='/media/ssd1/srgan_dataset/image_test/',
-                    # default='/media/ssd1/srgan_dataset/image_test_2/',
+                    # default='/media/ssd1/srgan_dataset/images_only_original/',
+                    default='/media/ssd1/srgan_dataset/dataset/',
                     help='Path for input images')
 
     parser.add_argument('-o', '--output_dir', action='store', dest='output_dir',
