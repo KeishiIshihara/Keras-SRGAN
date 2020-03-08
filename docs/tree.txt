@@ -1,0 +1,21 @@
+dataset
+├── images_test
+│   ├── faces
+│   │   └── test
+│   └── landscapes
+│       └── test
+│           ├── coast
+│           ├── highway
+│           ├── mountain
+│           └── Opencountry
+└── images_train
+    ├── faces
+    │   └── train
+    └── landscapes
+        └── train
+            ├── coast
+            ├── highway
+            ├── mountain
+            └── Opencountry
+
+18 directories
