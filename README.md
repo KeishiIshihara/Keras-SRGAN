@@ -37,8 +37,65 @@ $ CUDA_VISIBLE_DEVICES= python train.py -d 'downsample' -do 'faces' -b 16 -e 10 
 
 ```
 
-## Test
-comming soon..
+## Datasets
+**Training**
+- landscapes 1,160 (coast, highway, mountain, Opencountry)
+- faces      1,160
+- mix        1,160 (landscapes 580, faces 560)
+
+**Testing**
+- landscapes 140 (coast, highway, mountain, Opencountry)
+- faces      140
+- mix        140 (landscapes 70, faces 70)
+
+**Directory structure and volume**
+```
+dataset
+├── images_test
+│   ├── faces
+│   │   └── test
+│   └── landscapes
+│       └── test
+│           ├── coast
+│           ├── highway
+│           ├── mountain
+│           └── Opencountry
+└── images_train
+    ├── faces
+    │   └── train
+    └── landscapes
+        └── train
+            ├── coast
+            ├── highway
+            ├── mountain
+            └── Opencountry
+```
+
+```
+648K	dataset/images_test/landscapes/test/highway
+2.3M	dataset/images_test/landscapes/test/Opencountry
+1.8M	dataset/images_test/landscapes/test/mountain
+1.3M	dataset/images_test/landscapes/test/coast
+6.0M	dataset/images_test/landscapes/test
+6.0M	dataset/images_test/landscapes
+15M     dataset/images_test/faces/test
+15M     dataset/images_test/faces
+21M     dataset/images_test
+7.1M	dataset/images_train/landscapes/train/highway
+20M     dataset/images_train/landscapes/train/Opencountry
+17M     dataset/images_train/landscapes/train/mountain
+12M     dataset/images_train/landscapes/train/coast
+55M     dataset/images_train/landscapes/train
+55M     dataset/images_train/landscapes
+134M	dataset/images_train/faces/train
+134M	dataset/images_train/faces
+189M	dataset/images_train
+209M	dataset
+```
+
+
+## Results
+
 
 
 ---
