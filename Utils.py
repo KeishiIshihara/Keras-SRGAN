@@ -15,6 +15,7 @@ from numpy.random import randint
 from scipy.misc import imresize
 import os
 import sys
+from PIL import Image
 
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
@@ -79,14 +80,24 @@ def load_data_from_dirs(dirs, ext):
     files = []
     file_names = []
     count = 0
-    for d in dirs:
-        for f in os.listdir(d):
-            if f.endswith(ext):
-                image = data.imread(os.path.join(d,f))
+    if type(dirs) == list:
+        for d in dirs:
+            for f in os.listdir(d):
+                if f.endswith('.png') or f.endswith('.jpg'):
+                    image = data.imread(os.path.join(d,f))
+                    if len(image.shape) > 2:
+                        files.append(image)
+                        file_names.append(os.path.join(d,f))
+                    count = count + 1
+    if type(dirs) == str:
+        for f in os.listdir(dirs):
+            if f.endswith('.png') or f.endswith('.jpg'):
+                image = data.imread(os.path.join(dirs,f))
                 if len(image.shape) > 2:
                     files.append(image)
-                    file_names.append(os.path.join(d,f))
+                    file_names.append(os.path.join(dirs,f))
                 count = count + 1
+
     return files
 
 def load_data(directory, ext):
@@ -96,14 +107,23 @@ def load_data(directory, ext):
 
 
 def load_dir(params):
-    if params['data_domain'] == 'faces':
-        data_path = os.path.join(params['input_dir'], 'faces')
-    elif params['data_domain'] == 'landscapes':
-        data_path = os.path.join(params['input_dir'], 'landscapes')
-    else:
-        data_path = params['input_dir']
 
-    return data_path
+    if params['data_domain'] == 'faces':
+        train_path = os.path.join(params['input_dir'], 'images_train', 'faces')
+        test_path = os.path.join(params['input_dir'], 'images_test', 'faces')
+        monitoring = os.path.join(params['input_dir'], 'monitoring', 'faces/gt')
+
+    elif params['data_domain'] == 'landscapes':
+        train_path = os.path.join(params['input_dir'], 'images_train', 'landscapes')
+        test_path = os.path.join(params['input_dir'], 'images_test', 'landscapes')
+        monitoring = os.path.join(params['input_dir'], 'monitoring', 'landscapes/gt')
+
+    else:
+        train_path = os.path.join(params['input_dir'], 'images_train')
+        test_path = os.path.join(params['input_dir'], 'images_test')
+        monitoring = os.path.join(params['input_dir'], 'monitoring')
+
+    return train_path, test_path, monitoring
 
 
 def load_training_data(directory, ddomain='faces', number_of_images = 1000, train_test_ratio = 0.8, downscale_factor=4, interp='bicubic'):
@@ -334,7 +354,86 @@ def plot_generated_images_on_batch(output_dir, epoch, generator, data_gen , down
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'generated_image_{}.png'.format(epoch)))
 
-    #plt.show()
+
+# While training save generated image(in form LR, SR, HR)
+# Save only one image as sample
+def plot_generated_images_from_specific(output_dir, epoch, generator, input_image , downsample_factor, interp, dim=(1, 3), figsize=(15, 5)):
+
+    assert len(input_image.shape) == 3
+
+    image_hr = input_image.astype(np.uint8)
+    image_lr = normalized_lr_images(input_image, downsample_factor, interp)
+
+    gen_img = generator.predict(np.expand_dims(image_lr, axis=0))
+    generated_image = denormalize(gen_img[0])
+    image_lr = denormalize(image_lr)
+
+    plt.figure(figsize=figsize)
+
+    plt.subplot(dim[0], dim[1], 1)
+    plt.imshow(image_lr, interpolation='nearest')
+    plt.axis('off')
+
+    plt.subplot(dim[0], dim[1], 2)
+    plt.imshow(generated_image, interpolation='nearest')
+    plt.axis('off')
+
+    plt.subplot(dim[0], dim[1], 3)
+    plt.imshow(image_hr, interpolation='nearest')
+    plt.axis('off')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'generated_image_{}.png'.format(epoch)))
+
+    path = os.path.join(output_dir, 'history')
+    os.makedirs(path, exist_ok=True)
+    Image.fromarray(image_lr).save(path + '/epoch{}_lr.jpg'.format(epoch))
+    Image.fromarray(generated_image).save(path + '/epoch{}_generated.jpg'.format(epoch))
+    Image.fromarray(image_hr).save(path + '/epoch{}_hr.jpg'.format(epoch))
+
+
+
+def plot_generated_images_for_monitoring(output_dir, epoch, generator, input_images , downsample_factor, interp, dim=(1, 3), figsize=(15, 5)):
+
+    assert len(input_images.shape) == 4
+
+
+    examples = input_images.shape[0]
+    print(examples)
+
+    image_hr = input_images.astype(np.uint8)
+    image_lr = normalized_lr_images(input_images, downsample_factor, interp)
+
+    gen_img = generator.predict(image_lr)
+    generated_image = denormalize(gen_img)
+    image_lr = denormalize(image_lr)
+
+    plt.figure(figsize=(figsize[0], figsize[1]*examples))
+
+    for index in range(examples):
+        plt.subplot(examples*dim[0], dim[1], 3*index+1)
+        plt.imshow(image_lr[index], interpolation='nearest')
+        plt.axis('off')
+
+        plt.subplot(examples*dim[0], dim[1], 3*index+2)
+        plt.imshow(generated_image[index], interpolation='nearest')
+        plt.axis('off')
+
+        plt.subplot(examples*dim[0], dim[1], 3*index+3)
+        plt.imshow(image_hr[index], interpolation='nearest')
+        plt.axis('off')
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'monitoring_image_{}.png'.format(epoch)))
+
+    path = os.path.join(output_dir, 'history', 'epoch_{}'.format(epoch))
+    os.makedirs(path, exist_ok=True)
+    for i in range(examples):
+        Image.fromarray(image_lr[i]).save(path + '/{}_lr.jpg'.format(i))
+        Image.fromarray(generated_image[i]).save(path + '/{}_generated.jpg'.format(i))
+        Image.fromarray(image_hr[i]).save(path + '/{}_hr.jpg'.format(i))
+
+
 
 
 # Plots and save generated images(in form LR, SR, HR) from model to test the model
