@@ -170,9 +170,19 @@ def train_on_generator(params):
     output_dir = os.path.join(params['output_dir'], params['data_domain'])
     os.makedirs(output_dir, exist_ok=True)
 
-    monitoring_images = Utils.load_data_from_dirs(monitor_dir, None)
-    monitoring_images = np.array(monitoring_images)
+    # if not params['data_domain'] == 'both':
+    #     monitoring_images = Utils.load_data_from_dirs(monitor_dir, None)
+    #     monitoring_images = np.array(monitoring_images)
+    #     print('[INFO] monitoring images {} found.'.format(monitoring_images.shape[0]))
+    #     Utils.plot_generated_images_for_monitoring(output_dir, 99, None, monitoring_images, downscale_factor, interp)
+
+    monitoring_images_faces = Utils.load_data_from_dirs(monitor_dir[0], None)
+    monitoring_images_landscapes = Utils.load_data_from_dirs(monitor_dir[1], None)
+    monitoring_images = np.concatenate([monitoring_images_faces, monitoring_images_landscapes])
     print('[INFO] monitoring images {} found.'.format(monitoring_images.shape[0]))
+    print(monitoring_images.shape)
+
+    Utils.plot_generated_images_for_monitoring(output_dir, 'test', None, monitoring_images, downscale_factor, interp)
 
     # load datasets
     datagen = image.ImageDataGenerator(rescale=1.)
