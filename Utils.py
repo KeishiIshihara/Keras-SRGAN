@@ -108,20 +108,28 @@ def load_data(directory, ext):
 
 def load_dir(params):
 
-    if params['data_domain'] == 'faces':
-        train_path = os.path.join(params['input_dir'], 'images_train', 'faces')
-        test_path = os.path.join(params['input_dir'], 'images_test', 'faces')
-        monitoring = os.path.join(params['input_dir'], 'monitoring', 'faces/gt')
+    # if params['data_domain'] == 'faces':
+    #     train_path = os.path.join(params['input_dir'], 'images_train', 'faces')
+    #     test_path = os.path.join(params['input_dir'], 'images_test', 'faces')
+    #     monitoring = os.path.join(params['input_dir'], 'monitoring', 'faces/gt')
 
-    elif params['data_domain'] == 'landscapes':
-        train_path = os.path.join(params['input_dir'], 'images_train', 'landscapes')
-        test_path = os.path.join(params['input_dir'], 'images_test', 'landscapes')
-        monitoring = os.path.join(params['input_dir'], 'monitoring', 'landscapes/gt')
+    # elif params['data_domain'] == 'landscapes':
+    #     train_path = os.path.join(params['input_dir'], 'images_train', 'landscapes')
+    #     test_path = os.path.join(params['input_dir'], 'images_test', 'landscapes')
+    #     monitoring = os.path.join(params['input_dir'], 'monitoring', 'landscapes/gt')
 
-    else:
-        train_path = os.path.join(params['input_dir'], 'images_train')
-        test_path = os.path.join(params['input_dir'], 'images_test')
-        monitoring = os.path.join(params['input_dir'], 'monitoring')
+    # elif params['data_domain'] == 'both':
+    #     train_path = os.path.join(params['input_dir'], 'images_train', 'both')
+    #     test_path = os.path.join(params['input_dir'], 'images_test', 'both')
+    #     monitoring = []
+    #     monitoring.append(os.path.join(params['input_dir'], 'monitoring', 'faces/gt'))
+    #     monitoring.append(os.path.join(params['input_dir'], 'monitoring', 'landscapes/gt'))
+
+    train_path = os.path.join(params['input_dir'], 'images_train', 'both')
+    test_path = os.path.join(params['input_dir'], 'images_test', 'both')
+    monitoring = []
+    monitoring.append(os.path.join(params['input_dir'], 'monitoring', 'faces/gt'))
+    monitoring.append(os.path.join(params['input_dir'], 'monitoring', 'landscapes/gt'))
 
     return train_path, test_path, monitoring
 
@@ -397,15 +405,18 @@ def plot_generated_images_for_monitoring(output_dir, epoch, generator, input_ima
 
     assert len(input_images.shape) == 4
 
-
     examples = input_images.shape[0]
     print(examples)
 
     image_hr = input_images.astype(np.uint8)
     image_lr = normalized_lr_images(input_images, downsample_factor, interp)
 
-    gen_img = generator.predict(image_lr)
-    generated_image = denormalize(gen_img)
+    if generator is not None:
+        gen_img = generator.predict(image_lr)
+        generated_image = denormalize(gen_img)
+    else:
+        generated_image = denormalize(image_lr)
+
     image_lr = denormalize(image_lr)
 
     plt.figure(figsize=(figsize[0], figsize[1]*examples))
@@ -424,7 +435,7 @@ def plot_generated_images_for_monitoring(output_dir, epoch, generator, input_ima
         plt.axis('off')
 
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'monitoring_image_{}.png'.format(epoch)))
+    plt.savefig(os.path.join(output_dir, 'monitoring_images_{}.png'.format(epoch)))
 
     path = os.path.join(output_dir, 'history', 'epoch_{}'.format(epoch))
     os.makedirs(path, exist_ok=True)
